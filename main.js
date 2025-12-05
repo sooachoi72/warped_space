@@ -15,12 +15,12 @@ import { gsap } from "https://cdn.jsdelivr.net/npm/gsap@3.12.5/index.js";
 const CONFIG = {
     planeSize: 1000,
     maxMassCount: 5,
-    maxMassValue: 150, // REQ 2: 최대 질량 감소 (왜곡 정도 줄임)
+    maxMassValue: 200, // REQ 2: 최대 질량 감소 (왜곡 정도 줄임)
     minMassValue: 10,
     gridScale: 100.0,
     gravityK: 5.0,    // REQ 2: 중력 상수 감소 (왜곡 정도 줄임)
     epsilon: 20.0,      // REQ 2: 엡실론 증가 (중심부 기울기 완만하게)
-    userMass: 10,      // REQ 1: 사용자 질량 (최소 질량과 동일)
+    userMass: 20,      // REQ 1: 사용자 질량 (최소 질량과 동일)
     userHeightOffset: 15 // 사용자 눈높이
 };
 
@@ -506,8 +506,12 @@ function animate() {
     // REQ 1: 사용자 시뮬레이션 업데이트
     updateUserSimulation(deltaTime);
 
-    // 질량체 물리 및 위치 업데이트
-    if(state.masses.length > 0) updateMassPhysics(deltaTime);
+   // 질량체 물리 업데이트 및 쉐이더 데이터 동기화
+    if(state.masses.length > 0) {
+        updateMassPhysics(deltaTime);
+        // ★ 핵심 수정: 질량체가 움직였으니 쉐이더에 새 위치를 알려줌
+        updateShaderData();
+    }
 
     composer.render();
     requestAnimationFrame(animate);
