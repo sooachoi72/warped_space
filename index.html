@@ -6,93 +6,39 @@
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Pretendard', sans-serif; }
         
-        /* UI Overlay */
-        #ui-layer {
-            position: absolute;
-            top: 20px; left: 20px;
-            z-index: 10;
-            color: white;
-            pointer-events: none;
-            text-shadow: 0 0 10px rgba(0,0,0,0.8);
-        }
+        #ui-layer { position: absolute; top: 20px; left: 20px; z-index: 10; color: white; pointer-events: none; text-shadow: 0 0 10px rgba(0,0,0,0.8); }
+        
         h1 { margin: 0 0 10px 0; font-weight: 300; font-size: 1.5rem; letter-spacing: 2px; }
         .controls-info { font-size: 0.8rem; opacity: 0.7; line-height: 1.6; }
         
-        /* Buttons */
-        #btn-container {
-            pointer-events: auto;
-            margin-top: 20px;
-            display: flex;
-            gap: 10px;
-        }
-        button {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 30px;
-            cursor: pointer;
-            backdrop-filter: blur(5px);
-            transition: all 0.3s;
-            font-size: 0.9rem;
-        }
+        #btn-container { pointer-events: auto; margin-top: 20px; display: flex; gap: 10px; }
+        
+        button { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 10px 20px; border-radius: 30px; cursor: pointer; backdrop-filter: blur(5px); transition: all 0.3s; font-size: 0.9rem; }
         button:hover { background: rgba(255, 255, 255, 0.3); transform: scale(1.05); }
         button.active { background: #ff8800; border-color: #ff8800; color: black; font-weight: bold; }
         button:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
         
         #btn-reset { border-color: #ff4444; color: #ffcccc; }
         #btn-reset:hover { background: rgba(255, 68, 68, 0.3); }
-
-        /* Mass Indicator */
+        
         #mass-count { margin-top: 10px; font-size: 0.8rem; color: #ff8800; }
-
-        /* Context Menu (Right Click) */
-        #context-menu {
-            display: none;
-            position: absolute;
-            z-index: 100;
-            background: rgba(0, 0, 0, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            padding: 5px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-        #btn-delete-mass {
-            background: transparent;
-            border: none;
-            color: #ff6666;
-            padding: 8px 15px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            width: 100%;
-            text-align: left;
-        }
+        
+        #context-menu { display: none; position: absolute; z-index: 100; background: rgba(0, 0, 0, 0.8); border: 1px solid rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); padding: 5px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        
+        #btn-delete-mass { background: transparent; border: none; color: #ff6666; padding: 8px 15px; font-size: 0.9rem; cursor: pointer; width: 100%; text-align: left; }
         #btn-delete-mass:hover { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
     </style>
 </head>
 <body>
-
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.164.1/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.164.1/examples/jsm/"
-            }
-        }
-    </script>
-
-    <div id="context-menu">
-        <button id="btn-delete-mass">🗑️ Delete Mass</button>
-    </div>
-
+    <script type="importmap"> { "imports": { "three": "https://unpkg.com/three@0.164.1/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.164.1/examples/jsm/" } } </script>
+    <div id="context-menu"><button id="btn-delete-mass">🗑️ Delete Mass</button></div>
     <div id="ui-layer">
         <h1>WARPED SPACE</h1>
         <div class="controls-info">
             <b>View Mode:</b> <span id="view-mode-text">GOD MODE</span><br>
             <b>Interaction:</b> Click 'Add Mass' -> Hold & Release<br>
             <b>Delete:</b> Right-Click on Mass<br>
-            <b>Move (FPS):</b> W, A, S, D Keys<br>
+            <b>Move (FPS):</b> W, A, S, D (Thrust)<br>
             <b>Look (FPS):</b> Drag Mouse
         </div>
         <div id="mass-count">Masses: 0 / 5</div>
@@ -102,87 +48,90 @@
             <button id="btn-reset">↺ Reset All</button>
         </div>
     </div>
-
     <canvas id="webgl"></canvas>
 
     <script id="vertexShader" type="x-shader/x-vertex">
-        uniform float uTime;
-        uniform int uMassCount;
-        uniform vec3 uMassPositions[5];
-        uniform float uMassValues[5];
-        uniform float uK;
+        uniform float uTime; 
+        uniform int uMassCount; 
+        uniform vec3 uMassPositions[5]; 
+        uniform float uMassValues[5]; 
+        uniform float uK; 
         uniform float uEpsilon;
-
-        varying float vHeight;
-        varying vec2 vUv;
+        
+        varying float vHeight; 
+        varying vec2 vUv; 
         varying vec3 vWorldPosition;
-
+        
         void main() {
-            vUv = uv;
-            vec3 newPos = position;
+        vUv = uv;
+        vec3 newPos = position;
+        vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+        
+        float displacement = 0.0;
+        
+        vec3 pull = vec3(0.0); 
+
+        for(int i = 0; i < 5; i++) {
+            if(i >= uMassCount) break;
+
+            float dx = worldPosition.x - uMassPositions[i].x;
+            float dz = worldPosition.z - uMassPositions[i].z;
+            float r = sqrt(dx * dx + dz * dz + uEpsilon * uEpsilon);
             
-            // World Position 계산
-            vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-            
-            // Displacement Logic (중력 왜곡 - 뉴턴 퍼텐셜 근사)
-            float displacement = 0.0;
-            for(int i = 0; i < 5; i++) {
-                if(i >= uMassCount) break;
+            float force = -uK * (uMassValues[i] / r);
+            displacement += force;
 
-                float dx = worldPosition.x - uMassPositions[i].x;
-                float dz = worldPosition.z - uMassPositions[i].z;
-                // epsilon을 추가하여 중심에서의 무한대 발산 방지 (수치적 안정성)
-                float r = sqrt(dx * dx + dz * dz + uEpsilon * uEpsilon);
-                
-                // V = -GM/r 형태의 퍼텐셜 우물 시각화
-                displacement += -uK * (uMassValues[i] / r);
-            }
-
-            // 가장자리 감쇠 (평면 끝부분을 부드럽게 만듦)
-            float distFromCenter = length(worldPosition.xz);
-            float edgeFactor = 1.0 - smoothstep(300.0, 480.0, distFromCenter);
-            displacement *= edgeFactor;
-
-            newPos.z += displacement; 
-            
-            vHeight = displacement;
-            vWorldPosition = (modelMatrix * vec4(newPos, 1.0)).xyz;
-
-            gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(newPos, 1.0);
+            // 깊이가 깊을수록(force가 강할수록) 더 강하게 당김
+            float pullFactor = force * 0.2; // 당기는 강도 조절
+            pull.x += (dx / r) * pullFactor; // X축 당김
+            pull.y += (dz / r) * pullFactor; // Z축(코드상 y) 당김
         }
+
+        // 가장자리 부드럽게
+        float distFromCenter = length(worldPosition.xz);
+        float edgeFactor = 1.0 - smoothstep(350.0, 490.0, distFromCenter);
+        
+        displacement *= edgeFactor;
+        pull *= edgeFactor; // 당기는 힘도 가장자리에선 약하게
+
+        // 좌표 적용
+        newPos.z += displacement; // 아래로 꺼짐
+        newPos.x += pull.x;       // 옆으로 빨려감 
+        newPos.y -= pull.y;       // 위아래로 빨려감
+
+        vHeight = displacement;
+        vWorldPosition = (modelMatrix * vec4(newPos, 1.0)).xyz;
+
+        gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(newPos, 1.0);
+    }
     </script>
 
     <script id="fragmentShader" type="x-shader/x-fragment">
-        varying float vHeight;
-        varying vec2 vUv;
-        varying vec3 vWorldPosition;
-
-        uniform vec3 uGridColor;
-        uniform vec3 uBaseColor;
-        uniform float uGridScale;
-        
+        varying float vHeight; varying vec2 vUv; varying vec3 vWorldPosition;
+        uniform vec3 uGridColor; uniform vec3 uBaseColor; uniform float uGridScale;
         void main() {
-            // 1. Grid Pattern
-            vec2 gridUV = vUv * uGridScale; 
-            vec2 grid = abs(fract(gridUV - 0.5) - 0.5) / fwidth(gridUV);
-            float line = min(grid.x, grid.y);
-            float gridIntensity = 1.0 - min(line, 1.0);
+        vec2 gridUV = vUv * uGridScale; 
+        vec2 grid = abs(fract(gridUV - 0.5) - 0.5) / fwidth(gridUV);
+        float line = min(grid.x, grid.y);
+        float gridIntensity = 1.0 - min(line, 1.0);
 
-            // 2. Depth Color (깊이에 따라 색상 변화)
-            float depth = clamp(abs(vHeight) * 0.05, 0.0, 1.0);
-            vec3 depthColor = mix(uGridColor, vec3(1.0, 0.3, 0.1), depth * 2.0); 
+        float depth = clamp(abs(vHeight) * 0.05, 0.0, 1.0); 
+        
+        vec3 targetColor = vec3(1.0, 0.5, 0.1); 
+        
+        vec3 depthColor = mix(uGridColor, targetColor, depth * 0.5); 
 
-            vec3 finalColor = mix(uBaseColor, depthColor, gridIntensity);
-            finalColor += depthColor * gridIntensity * 1.5; // Glow
+        vec3 finalColor = mix(uBaseColor, depthColor, gridIntensity);
+        
+        float glowFactor = 0.3 + depth * 0.5;
+        finalColor += depthColor * gridIntensity * glowFactor; 
 
-            // 3. Fog (거리 기반 페이드 아웃)
-            float dist = length(vWorldPosition.xz);
-            float fade = 1.0 - smoothstep(200.0, 500.0, dist); 
-            
-            gl_FragColor = vec4(finalColor * fade, 1.0);
-        }
+        float dist = length(vWorldPosition.xz);
+        float fade = 1.0 - smoothstep(300.0, 500.0, dist); 
+        
+        gl_FragColor = vec4(finalColor * fade, 1.0);
+    }
     </script>
-
     <script type="module" src="main.js"></script>
 </body>
 </html>
